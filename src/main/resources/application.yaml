@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: desafio
+
+  # Configurações do H2
+  datasource:
+    url: jdbc:h2:mem:url_db
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+
+  # Configurações do Redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # Habilitar o Cache do Spring
+  cache:
+    type: redis
