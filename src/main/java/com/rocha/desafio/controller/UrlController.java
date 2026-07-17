@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
@@ -27,33 +28,36 @@ public class UrlController {
     public final UrlService urlService;
 
     @Operation(
-        summary = "Encurta uma URL original",
-        description = "Recebe uma URL longa informada pelo usuário e gera uma chave única de acesso reduzido."
+            summary = "Encurta uma URL original",
+            description = "Recebe uma URL longa informada pelo usuário e gera uma chave única de acesso reduzido."
     )
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "URL encurtada com sucesso",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UrlResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Requisição inválida ou corpo mal formatado", content = @Content)
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "URL encurtada com sucesso",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UrlResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Requisição inválida ou corpo mal formatado", content = @Content)
     })
     @PostMapping("/shorten")
-    public ResponseEntity<UrlResponse> shorten(@Valid @RequestBody UrlRequest urlRequest) { // Adicionado @Valid aqui
+    public ResponseEntity<UrlResponse> shorten(@Valid @RequestBody UrlRequest urlRequest) {
         String originalUrl = urlRequest.getUrl();
-
         String shortKey = urlService.shortenUrl(originalUrl);
-        String shortUrl = "http://localhost:8080/api/v1/url/" + shortKey;
 
-        return ResponseEntity.ok(new UrlResponse(shortUrl));
+        String shortUrlOtimizada = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/v1/url/{shortKey}")
+                .buildAndExpand(shortKey)
+                .toUriString();
+
+        return ResponseEntity.ok(new UrlResponse(shortUrlOtimizada));
     }
 
     @Operation(
-        summary = "Redireciona para a URL original",
-        description = "Recebe o identificador curto (shortKey) e realiza o redirecionamento automático (HTTP 302) para o endereço web original."
+            summary = "Redireciona para a URL original",
+            description = "Recebe o identificador curto (shortKey) e realiza o redirecionamento automático (HTTP 302) para o endereço web original."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "302", description = "Redirecionamento executado com sucesso", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Identificador curto não encontrado no sistema", content = @Content)
+            @ApiResponse(responseCode = "302", description = "Redirecionamento executado com sucesso", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Identificador curto não encontrado no sistema", content = @Content)
     })
     @GetMapping("/{shortKey}")
     public ResponseEntity<Object> redirect(

@@ -4,6 +4,7 @@ import com.rocha.desafio.dto.UrlRequest;
 import com.rocha.desafio.dto.UrlResponse;
 import com.rocha.desafio.model.UrlMapping; // Ajuste para o pacote real do seu modelo
 import com.rocha.desafio.service.UrlService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +13,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
 
@@ -28,7 +32,7 @@ class UrlControllerTest {
     private UrlController urlController;
 
     @Test
-    @DisplayName("Deve encurtar a URL com sucesso e retornar status 200")
+    @DisplayName("Deve encurtar a URL com sucesso e retornar status 200 usando UriComponentsBuilder")
     void deveEncurtarUrlComSucesso() {
         // Arrange
         UrlRequest request = new UrlRequest();
@@ -37,16 +41,31 @@ class UrlControllerTest {
         String shortKeyMock = "abc123XYZ";
         when(urlService.shortenUrl("https://google.com")).thenReturn(shortKeyMock);
 
-        // Act
-        ResponseEntity<UrlResponse> response = urlController.shorten(request);
+        // 1. Cria a requisição mockada simulando o domínio "http://localhost:8080"
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.setScheme("http");
+        mockRequest.setServerName("localhost");
+        mockRequest.setServerPort(8080);
 
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("http://localhost:8080/api/v1/url/" + shortKeyMock, response.getBody().getShortUrl());
+        // 2. Injeta essa requisição no contexto atual da Thread (o que o Spring espera)
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
 
-        verify(urlService, times(1)).shortenUrl("https://google.com");
+        try {
+            // Act - Agora chama o método sem passar o request por parâmetro
+            ResponseEntity<UrlResponse> response = urlController.shorten(request);
+
+            // Assert
+            assertNotNull(response);
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertNotNull(response.getBody());
+            assertEquals("http://localhost:8080/api/v1/url/" + shortKeyMock, response.getBody().getShortUrl());
+
+            verify(urlService, times(1)).shortenUrl("https://google.com");
+
+        } finally {
+            // 3. Limpa o contexto de requisição após o teste (evita poluir outros testes)
+            RequestContextHolder.resetRequestAttributes();
+        }
     }
 
     @Test

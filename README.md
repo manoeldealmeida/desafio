@@ -37,13 +37,16 @@ docker compose up -d
 > **Nota:** Para verificar se os containers subiram com sucesso, você pode rodar `docker ps`.
 
 ### 3. Executando a Aplicação Spring Boot
-Com a infraestrutura do Redis ativa, você pode iniciar o servidor do Spring Boot utilizando o Maven. Execute o seguinte comando no terminal:
+Com a infraestrutura do Redis activa, você pode iniciar o servidor do Spring Boot utilizando o Maven. Execute o seguinte comando no terminal:
 
 ```bash
 mvn spring-boot:run
 ```
 
 O servidor será iniciado na porta padrão **`8080`**.
+
+> ### ⚠️ Aviso Importante sobre as URLs
+> Para que o encurtador funcione corretamente, **é obrigatório incluir o protocolo (`http://` ou `https://`)** antes do endereço (ex: `https://www.google.com`). Se você digitar apenas `www.google.com`, a validação do sistema recusará a requisição por falta de formato de URL válido.
 
 ---
 
@@ -57,9 +60,9 @@ Após iniciar o projeto, você poderá acessar as seguintes interfaces pelo seu 
 
 * **Console do Banco de Dados H2:**  
   [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-    * **JDBC URL:** `jdbc:h2:mem:url_db`
-    * **User Name:** `sa`
-    * **Password:** *(deixe em branco)*
+  * **JDBC URL:** `jdbc:h2:mem:url_db`
+  * **User Name:** `sa`
+  * **Password:** *(deixe em branco)*
 
 * **Redis Insight (Interface Visual do Cache):**  
   [http://localhost:5540](http://localhost:5540)  
@@ -69,12 +72,15 @@ Após iniciar o projeto, você poderá acessar as seguintes interfaces pelo seu 
 
 ## 📌 Endpoints da API
 
+**Endereço Base da API:** `http://localhost:8080`
+
 ### 1. Encurtar uma URL
-* **Rota:** `POST /api/v1/url/shorten`
+* **Método/Rota:** `POST http://localhost:8080/api/v1/url/shorten`
+* **Descrição:** Recebe a URL longa. Lembre-se de enviar sempre com o protocolo incluído.
 * **Corpo da Requisição (JSON):**
 ```json
 {
-  "url": "https://google.com"
+  "url": "https://www.google.com"
 }
 ```
 * **Resposta de Sucesso (200 OK):**
@@ -85,7 +91,7 @@ Após iniciar o projeto, você poderá acessar as seguintes interfaces pelo seu 
 ```
 
 ### 2. Redirecionar para URL Original
-* **Rota:** `GET /api/v1/url/{shortKey}`
+* **Método/Rota:** `GET http://localhost:8080/api/v1/url/{shortKey}`
 * **Descrição:** Ao acessar este link direto pelo navegador, o sistema incrementa o contador de acessos e redireciona (Status 302) o usuário automaticamente para o site original.
 
 ---
@@ -96,7 +102,7 @@ Após iniciar o projeto, você poderá acessar as seguintes interfaces pelo seu 
 2. **Prevenção de Cache de Valores Nulos:** O cache está configurado para não registrar buscas falhas (`unless`), evitando que requisições inválidas persistam na memória.
 3. **Mecanismo de TTL (Time-To-Live):** Configuração customizada do ecossistema Redis para expirar registros de cache automaticamente após 1 dia, otimizando o uso de memória.
 4. **Resiliência de Serialização:** Configuração com suporte nativo a tipos modernos do Java 8+ (`ZonedDateTime`) via Jackson Modules.
-5. **Validação de Payload:** Uso de validações restritivas (`@NotBlank` e `@URL`) para garantir a integridade dos dados de entrada.
+5. **Validação de Payload:** Uso de validações restritivas (`@NotBlank` e `@URL`) que exigem a presença do protocolo para garantir a integridade dos dados de entrada.
 
 * **Interface Web do Usuário (Frontend):**  
   [http://localhost:8080](http://localhost:8080)  
