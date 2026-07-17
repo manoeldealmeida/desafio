@@ -41,7 +41,12 @@
             }
 
             const data = await response.json();
-            resultDiv.innerHTML = `Link curto gerado:<br><a href="${data.shortUrl}" target="_blank">${data.shortUrl}</a>`;
+
+            // Remove o prefixo da API apenas para o texto visível na tela
+            const linkVisivel = data.shortUrl.replace("http://localhost:8080/api/v1/", "");
+
+            // O href continua com a URL completa para funcionar, mas o texto da tela fica curto
+            resultDiv.innerHTML = `Link curto gerado:<br><a href="${data.shortUrl}" target="_blank">${linkVisivel}</a>`;
         } catch (error) {
             resultDiv.innerHTML = `<span style="color:red;">${error.message}</span>`;
         }
